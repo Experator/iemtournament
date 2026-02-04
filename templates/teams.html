@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="teams-page">
+    <h2 class="page-title">Приглашенные команды</h2>
+    <p class="page-subtitle">4 лучшие команды сражаются за титул чемпиона IEM SAMARA 2026</p>
+    
+    <div class="teams-container">
+        {% for team_id, team in teams.items() %}
+        <a href="{{ url_for('team', team_id=team_id) }}" class="team-card-large">
+            <div class="team-header">
+                <div class="team-logo-large">
+                    <div class="logo-placeholder">
+                        <img src="/static/images/logos/{{ team.logo or 'default.png' }}" 
+             alt="{{ team.name }}" 
+             class="team-logo-large-img1"
+             onerror="handleTeamLogoError(this)">
+                    </div>
+                </div>
+                <div class="team-name-large">
+                    <h3>{{ team.name }}</h3>
+                    <span class="team-country">{{ team.country }}</span>
+                </div>
+                <div class="team-ranking">
+                    <span class="ranking-label">Мировой рейтинг</span>
+                    <span class="ranking-value">#{{ team.world_ranking }}</span>
+                </div>
+            </div>
+            <div class="team-players">
+                <h4>Состав команды:</h4>
+                <div class="players-list">
+                    {% for player in team.players[:3] %}
+                    <span class="player-name">{{ player.name }}</span>
+                    {% endfor %}
+                    <span class="more-players">+{{ team.players|length - 3 }} игроков</span>
+                </div>
+            </div>
+            <div class="team-footer">
+                <span class="view-details">Подробнее <i class="fas fa-arrow-right"></i></span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    
+    <div class="stats-section">
+        <h3 class="section-title">Статистика турнира</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Матчей сыграно</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Раундов сыграно</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">-</div>
+                <div class="stat-label">Средний рейтинг HLTV</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">-</div>
+                <div class="stat-label">Карт на Mirage</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

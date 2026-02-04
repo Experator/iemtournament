@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bracket-page">
+    <h1 class="bracket-title">Турнирная сетка</h1>
+
+    <div class="tournament-grid" style="--cell-margin: 20px; --line-color: #00a8ff; --line-width: 2px;">
+        <div class="grid-container">
+            <!-- Полуфиналы -->
+            <div class="stage semifinal">
+                <div class="stage-title">
+                    <h2>Полуфинал</h2>
+                </div>
+
+                <div class="matches-container">
+                    <!-- Полуфинал 1 -->
+                    {% set semifinal1 = bracket.semifinals[0] %}
+                    {% set winner1 = semifinal1.team1 if semifinal1.score1|int > semifinal1.score2|int else semifinal1.team2 %}
+                    <div class="match-wrapper" data-match-id="semifinal-1">
+                        <table class="match-table">
+                            <tbody>
+                                <tr>
+                                    <td class="team-cell {% if semifinal1.completed %}{% if semifinal1.team1 == winner1 %}winner{% else %}loser{% endif %}{% endif %}">
+                                        <div class="team-content">
+                                            <span class="team-name">{{ semifinal1.team1 }}</span>
+                                            <span class="team-score">{{ semifinal1.score1 }}</span>
+                                            {% if semifinal1.completed and semifinal1.team1 == winner1 %}
+                                            <span class="match-result">🏆</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="team-cell {% if semifinal1.completed %}{% if semifinal1.team2 == winner1 %}winner{% else %}loser{% endif %}{% endif %}">
+                                        <div class="team-content">
+                                            <span class="team-name">{{ semifinal1.team2 }}</span>
+                                            <span class="team-score">{{ semifinal1.score2 }}</span>
+                                            {% if semifinal1.completed and semifinal1.team2 == winner1 %}
+                                            <span class="match-result">🏆</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="match-date">{{ semifinal1.date }}</div>
+                        {% if semifinal1.completed %}
+                        <div class="match-status completed">Завершен</div>
+                        {% else %}
+                        <div class="match-status upcoming">Ожидается</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Полуфинал 2 -->
+                    {% set semifinal2 = bracket.semifinals[1] %}
+                    {% if semifinal2.score1 != "TBD" and semifinal2.score2 != "TBD" %}
+                        {% set winner2 = semifinal2.team1 if semifinal2.score1|int > semifinal2.score2|int else semifinal2.team2 %}
+                    {% else %}
+                        {% set winner2 = "TBD" %}
+                    {% endif %}
+                    <div class="match-wrapper" data-match-id="semifinal-2">
+                        <table class="match-table">
+                            <tbody>
+                                <tr>
+                                    <td class="team-cell {% if semifinal2.completed %}{% if semifinal2.team1 == winner2 %}winner{% else %}loser{% endif %}{% endif %}">
+                                        <div class="team-content">
+                                            <span class="team-name">{{ semifinal2.team1 }}</span>
+                                            <span class="team-score">{{ semifinal2.score1 }}</span>
+                                            {% if semifinal2.completed and semifinal2.team1 == winner2 %}
+                                            <span class="match-result">🏆</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="team-cell {% if semifinal2.completed %}{% if semifinal2.team2 == winner2 %}winner{% else %}loser{% endif %}{% endif %}">
+                                        <div class="team-content">
+                                            <span class="team-name">{{ semifinal2.team2 }}</span>
+                                            <span class="team-score">{{ semifinal2.score2 }}</span>
+                                            {% if semifinal2.completed and semifinal2.team2 == winner2 %}
+                                            <span class="match-result">🏆</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="match-date">{{ semifinal2.date }}</div>
+                        {% if semifinal2.completed %}
+                        <div class="match-status completed">Завершен</div>
+                        {% else %}
+                        <div class="match-status upcoming">Ожидается</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Финал -->
+            <div class="stage final">
+                <div class="stage-title">
+                    <h2>Финал</h2>
+                </div>
+
+                <div class="matches-container">
+                    {% set final_match = bracket.final %}
+                    {% if final_match.score1 != "TBD" and final_match.score2 != "TBD" %}
+                        {% set final_winner = final_match.team1 if final_match.score1|int > final_match.score2|int else final_match.team2 %}
+                    {% else %}
+                        {% set final_winner = "TBD" %}
+                    {% endif %}
+                    
+                    <div class="match-wrapper" data-match-id="final">
+                        <table class="match-table final-match">
+                            <tbody>
+                                <tr>
+                                    <td class="team-cell {% if final_match.completed %}{% if final_match.team1 == final_winner %}winner{% else %}loser{% endif %}{% endif %}">
+                                        <div class="team-content">
+                                            <span class="team-name">{{ final_match.team1 }}</span>
+                                            <span class="team-score">{{ final_match.score1 }}</span>
+                                            {% if final_match.completed and final_match.team1 == final_winner %}
+                                            <span class="match-result">🏆</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="team-cell {% if final_match.completed %}{% if final_match.team2 == final_winner %}winner{% else %}loser{% endif %}{% endif %}">
+                                        <div class="team-content">
+                                            <span class="team-name">{{ final_match.team2 }}</span>
+                                            <span class="team-score">{{ final_match.score2 }}</span>
+                                            {% if final_match.completed and final_match.team2 == final_winner %}
+                                            <span class="match-result">🏆</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="match-date">{{ final_match.date }}</div>
+                        {% if final_match.completed %}
+                        <div class="match-status completed">Завершен</div>
+                        {% else %}
+                        <div class="match-status upcoming">Ожидается</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Соединительные линии -->
+        <div class="connector-lines">
+            <!-- Линия от верхнего полуфинала к финалу -->
+            <div class="connector-line line-1"></div>
+            <!-- Линия от нижнего полуфинала к финалу -->
+            <div class="connector-line line-2"></div>
+            <!-- Горизонтальная линия в финале -->
+            <div class="connector-line line-horizontal"></div>
+        </div>
+    </div>
+
+    <!-- Матч за третье место (под основной сеткой) -->
+    {% if bracket.third_place %}
+    <div class="third-place-section">
+        <div class="stage-title third-place-title">
+            <h2>Матч за 3-е место</h2>
+        </div>
+        
+        <div class="third-place-container">
+            {% set third_match = bracket.third_place %}
+            {% if third_match.score1 != "TBD" and third_match.score2 != "TBD" %}
+                {% set third_winner = third_match.team1 if third_match.score1|int > third_match.score2|int else third_match.team2 %}
+            {% else %}
+                {% set third_winner = "TBD" %}
+            {% endif %}
+            
+            <div class="match-wrapper third-place-wrapper" data-match-id="third-place">
+                <table class="match-table third-place-match">
+                    <tbody>
+                        <tr>
+                            <td class="team-cell {% if third_match.completed %}{% if third_match.team1 == third_winner %}winner{% else %}loser{% endif %}{% endif %}">
+                                <div class="team-content">
+                                    <span class="team-name">{{ third_match.team1 }}</span>
+                                    <span class="team-score">{{ third_match.score1 }}</span>
+                                    {% if third_match.completed and third_match.team1 == third_winner %}
+                                    <span class="match-result">🥉</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="team-cell {% if third_match.completed %}{% if third_match.team2 == third_winner %}winner{% else %}loser{% endif %}{% endif %}">
+                                <div class="team-content">
+                                    <span class="team-name">{{ third_match.team2 }}</span>
+                                    <span class="team-score">{{ third_match.score2 }}</span>
+                                    {% if third_match.completed and third_match.team2 == third_winner %}
+                                    <span class="match-result">🥉</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="match-date">{{ third_match.date }}</div>
+                {% if third_match.completed %}
+                <div class="match-status completed">Завершен</div>
+                {% else %}
+                <div class="match-status upcoming">Ожидается</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="back-to-schedule">
+        <a href="{{ url_for('schedule') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i>
+            <span>Вернуться к расписанию</span>
+        </a>
+    </div>
+</div>
+
+{% endblock %}

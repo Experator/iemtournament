@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="schedule-page">
+    <h2 class="page-title">Расписание матчей</h2>
+    
+    <div class="schedule-filters">
+        <button class="filter-btn active" data-filter="all">Все матчи</button>
+        <button class="filter-btn" data-filter="live">Live</button>
+        <button class="filter-btn" data-filter="upcoming">Будущие</button>
+        <button class="filter-btn" data-filter="completed">Завершенные</button>
+    </div>
+    
+    <div class="schedule-container">
+        {% for match in schedule %}
+        {% set match_detail = matches_details.get(match.id) %}
+        <a href="{{ url_for('match_detail', match_id=match.id) }}" class="schedule-match-link {{ match.status }}">
+            <div class="schedule-match {{ match.status }}">
+                <div class="match-time">
+                    <i class="fas fa-{% if match.status == 'live' %}circle live-indicator{% elif match.status == 'upcoming' %}clock{% else %}check-circle{% endif %}"></i>
+                    <span>{{ match.time }}</span>
+                </div>
+                <div class="match-details">
+                    <h3 class="match-teams">{{ match.match }}</h3>
+                    <div class="match-odds">
+                        <span>Коэффициенты: {{ match.odds }}</span>
+                    </div>
+                </div>
+                <div class="match-actions">
+                    {% if match.status == 'live' %}
+                    <button class="btn-watch-live">
+                        <i class="fas fa-play"></i> Смотреть live
+                    </button>
+                    {% elif match.status == 'upcoming' %}
+                    <button class="btn-reminder">
+                        <i class="fas fa-bell"></i> Напомнить
+                    </button>
+                    {% else %}
+                    <button class="btn-replay">
+                        <i class="fas fa-chart-bar"></i> Статистика
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="match-status-badge {{ match.status }}">
+                    {% if match.status == 'live' %}
+                    LIVE
+                    {% elif match.status == 'upcoming' %}
+                    Ожидается
+                    {% else %}
+                    Завершен
+                    {% endif %}
+                </div>
+                <div class="match-view-details">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color live"></div>
+            <span>Идет сейчас</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color upcoming"></div>
+            <span>Будущие матчи</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color completed"></div>
+            <span>Завершенные матчи</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

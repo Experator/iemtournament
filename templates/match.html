@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="match-detail-page">
+    <div class="match-header">
+        <div class="match-teams-header">
+            <div class="team-header">
+                {% set team1_name = match.team1 %}
+                {% set team1_logo = 'wwcr.jpg' if team1_name == 'WWCrafters' else 'swag.jpg' if team1_name == 'Swag'
+                else 'default.png' %}
+                <img src="/static/images/logos/{{ team1_logo }}" alt="{{ team1_name }}" class="team-logo-match">
+                <h2>{{ team1_name }}</h2>
+            </div>
+            <div class="match-score">
+                <div class="score-large">
+                    {% if match.status == 'completed' %}
+                    <span class="score-number">{{ match.team1_score or '0' }}</span>
+                    <span class="score-divider">:</span>
+                    <span class="score-number">{{ match.team2_score or '0' }}</span>
+                    {% else %}
+                    <span class="score-vs">VS</span>
+                    {% endif %}
+                </div>
+                <div class="match-status-large {{ match.status }}">
+                    {% if match.status == 'completed' %}
+                    Завершен
+                    {% elif match.status == 'live' %}
+                    LIVE
+                    {% else %}
+                    Ожидается
+                    {% endif %}
+                </div>
+            </div>
+            <div class="team-header">
+                {% set team2_name = match.team2 %}
+                {% set team2_logo = 'wwcr.jpg' if team2_name == 'WWCrafters' else 'swag.jpg' if team2_name == 'Swag'
+                else 'solyanka.jpg' if team2_name == 'Solyanka' else 'max.jpg' if team2_name == 'Team MAX' else
+                'default.png' %}
+                <img src="/static/images/logos/{{ team2_logo }}" alt="{{ team2_name }}" class="team-logo-match">
+                <h2>{{ team2_name }}</h2>
+            </div>
+        </div>
+
+        <div class="match-meta">
+            <div class="match-info">
+                <div class="info-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>{{ match.date }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-trophy"></i>
+                    <span>{{ match.event }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-flag"></i>
+                    <span>{{ match.format }}</span>
+                </div>
+                {% if match.scope_url %}
+                <div class="info-item">
+                    <i class="fas fa-external-link-alt"></i>
+                    <a href="{{ match.scope_url }}" target="_blank" class="scope-link">
+                        Статистика на scope.gg
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if match.status == 'completed' and 'maps' in match %}
+    
+    {# Вычисляем агрегированную статистику по всем картам #}
+    {% set all_players_stats = {} %}
+    {% for map in match.maps %}
+        {% for player in map.players_stats %}
+            {% set player_key = player.name ~ "|" ~ player.team %}
+            {% if player_key not in all_players_stats %}
+                {% set _ = all_players_stats.update({
+                    player_key: {
+                        'name': player.name,
+                        'team': player.team,
+                        'kills': player.kills,
+                        'deaths': player.deaths,
+                        'assists': player.assists,
+                        'rating_total': player.rating,
+                        'adr_total': player.adr,
+                        'hs_total': player.hs|replace('%', '')|float,
+                        'kast_total': player.kast|replace('%', '')|float,
+                        'maps_played': 1
+                    }
+                }) %}
+            {% else %}
+                {% set existing = all_players_stats[player_key] %}
+                {% set _ = all_players_stats.update({
+                    player_key: {
+                        'name': player.name,
+                        'team': player.team,
+                        'kills': existing.kills + player.kills,
+                        'deaths': existing.deaths + player.deaths,
+                        'assists': existing.assists + player.assists,
+                        'rating_total': existing.rating_total + player.rating,
+                        'adr_total': existing.adr_total + player.adr,
+                        'hs_total': existing.hs_total + (player.hs|replace('%', '')|float),
+                        'kast_total': existing.kast_total + (player.kast|replace('%', '')|float),
+                        'maps_played': existing.maps_played + 1
+                    }
+                }) %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    
+    {# Вычисляем средние значения и форматируем #}
+    {% set aggregated_stats = [] %}
+    {% for player_key, stats in all_players_stats.items() %}
+        {% set avg_rating = stats.rating_total / stats.maps_played %}
+        {% set avg_adr = stats.adr_total / stats.maps_played %}
+        {% set avg_hs = stats.hs_total / stats.maps_played %}
+        {% set avg_kast = stats.kast_total / stats.maps_played %}
+        
+        {% set _ = aggregated_stats.append({
+            'name': stats.name,
+            'team': stats.team,
+            'kills': stats.kills,
+            'deaths': stats.deaths,
+            'assists': stats.assists,
+            'rating': avg_rating,
+            'adr': avg_adr,
+            'hs': avg_hs|round(1) ~ '%',
+            'kast': avg_kast|round(1) ~ '%',
+            'maps_played': stats.maps_played
+        }) %}
+    {% endfor %}
+    
+    <div class="match-content">
+        <!-- Вкладки карт и статистики -->
+        <div class="maps-section">
+            <div class="maps-tabs">
+                <div class="tabs-header">
+                    {% for map in match.maps %}
+                    <button class="tab-link {% if loop.first %}active{% endif %}" 
+                            data-tab="map-{{ loop.index }}">
+                        <i class="fas fa-map"></i> {{ map.name }}
+                    </button>
+                    {% endfor %}
+                    
+                    <!-- Новая вкладка для статистики со всех карт -->
+                    <button class="tab-link" data-tab="all-maps-stats">
+                        <i class="fas fa-chart-bar"></i> Статистика со всех карт
+                    </button>
+                </div>
+                
+                <div class="tabs-content">
+                    <!-- Контент для каждой карты -->
+                    {% for map in match.maps %}
+                    <div class="tab-pane {% if loop.first %}active{% endif %}" id="map-{{ loop.index }}">
+                        <div class="map-card">
+                            <div class="map-header">
+                                <div class="map-name">
+                                    <i class="fas fa-map"></i>
+                                    <span>{{ map.name }}</span>
+                                </div>
+                                <div class="map-score">
+                                    <!-- Победитель карты -->
+                                    <span class="score-team win-status">
+                                        {{ match.team1 if map.winner == match.team1 else match.team2 }}
+                                        <span class="status-label win">(Win)</span>
+                                    </span>
+
+                                    <span class="score-numbers">{{ map.score }}</span>
+
+                                    <!-- Проигравший карты -->
+                                    <span class="score-team lose-status">
+                                        {{ match.team2 if map.winner == match.team1 else match.team1 }}
+                                        <span class="status-label lose">(Lose)</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="map-details">
+                                <div class="map-winner">
+                                    <i class="fas fa-crown"></i>
+                                    <span>Победитель: <strong>{{ map.winner }}</strong></span>
+                                </div>
+                                <div class="map-duration">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Продолжительность: {{ map.duration }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Статистика игроков на карте -->
+                            <div class="map-players-stats">
+                                <h4>Статистика игроков на {{ map.name }}</h4>
+                                <div class="players-stats-table">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Игрок</th>
+                                                <th>Рейтинг</th>
+                                                <th>Убийства</th>
+                                                <th>Смерти</th>
+                                                <th>Ассисты</th>
+                                                <th>ADR</th>
+                                                <th>HS%</th>
+                                                <th>KAST</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Команда 1 -->
+                                            <tr class="team-header-row {{ 'winner-team' if map.winner == match.team1 else 'loser-team' }}">
+                                                <td colspan="8">
+                                                    <i class="fas fa-users"></i> {{ match.team1 }}
+                                                    <span class="team-status {{ 'win' if map.winner == match.team1 else 'lose' }}">
+                                                        ({{ 'Win' if map.winner == match.team1 else 'Lose' }})
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% for player in map.players_stats if player.team == match.team1 %}
+                                            <tr class="player-stat-row">
+                                                <td class="player-name-cell">
+                                                    <strong>{{ player.name }}</strong>
+                                                </td>
+                                                <td class="rating-cell {{ 'high-rating' if player.rating >= 1.2 else 'low-rating' if player.rating < 0.9 else '' }}">
+                                                    {{ "%.2f"|format(player.rating) }}
+                                                </td>
+                                                <td>{{ player.kills }}</td>
+                                                <td>{{ player.deaths }}</td>
+                                                <td>{{ player.assists }}</td>
+                                                <td>{{ "%.1f"|format(player.adr) }}</td>
+                                                <td>{{ player.hs }}</td>
+                                                <td>{{ player.kast }}</td>
+                                            </tr>
+                                            {% endfor %}
+
+                                            <!-- Команда 2 -->
+                                            <tr class="team-header-row {{ 'winner-team' if map.winner == match.team2 else 'loser-team' }}">
+                                                <td colspan="8">
+                                                    <i class="fas fa-users"></i> {{ match.team2 }}
+                                                    <span class="team-status {{ 'win' if map.winner == match.team2 else 'lose' }}">
+                                                        ({{ 'Win' if map.winner == match.team2 else 'Lose' }})
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% for player in map.players_stats if player.team == match.team2 %}
+                                            <tr class="player-stat-row">
+                                                <td class="player-name-cell">
+                                                    <strong>{{ player.name }}</strong>
+                                                </td>
+                                                <td class="rating-cell {{ 'high-rating' if player.rating >= 1.2 else 'low-rating' if player.rating < 0.9 else '' }}">
+                                                    {{ "%.2f"|format(player.rating) }}
+                                                </td>
+                                                <td>{{ player.kills }}</td>
+                                                <td>{{ player.deaths }}</td>
+                                                <td>{{ player.assists }}</td>
+                                                <td>{{ "%.1f"|format(player.adr) }}</td>
+                                                <td>{{ player.hs }}</td>
+                                                <td>{{ player.kast }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Новая вкладка: Статистика со всех карт -->
+                    <div class="tab-pane" id="all-maps-stats">
+                        <div class="map-card">
+                            <div class="map-header">
+                                <div class="map-name">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <span>Общая статистика матча</span>
+                                </div>
+                                <div class="map-score">
+                                    <span class="score-numbers">Всего карт: {{ match.maps|length }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Статистика игроков по всем картам -->
+                            <div class="map-players-stats">
+                                <h4>Средняя статистика игроков за все карты</h4>
+                                <div class="players-stats-table">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Игрок</th>
+                                                <th>Ср. рейтинг</th>
+                                                <th>Убийства</th>
+                                                <th>Смерти</th>
+                                                <th>Ассисты</th>
+                                                <th>Ср. ADR</th>
+                                                <th>Ср. HS%</th>
+                                                <th>Ср. KAST</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Команда 1 -->
+                                            <tr class="team-header-row">
+                                                <td colspan="8">
+                                                    <i class="fas fa-users"></i> {{ match.team1 }}
+                                                </td>
+                                            </tr>
+                                            {% for player in aggregated_stats if player.team == match.team1 %}
+                                            <tr class="player-stat-row">
+                                                <td class="player-name-cell">
+                                                    <strong>{{ player.name }}</strong>
+                                                </td>
+                                                <td class="rating-cell {{ 'high-rating' if player.rating >= 1.2 else 'low-rating' if player.rating < 0.9 else '' }}">
+                                                    {{ "%.2f"|format(player.rating) }}
+                                                </td>
+                                                <td>{{ player.kills }}</td>
+                                                <td>{{ player.deaths }}</td>
+                                                <td>{{ player.assists }}</td>
+                                                <td>{{ "%.1f"|format(player.adr) }}</td>
+                                                <td>{{ player.hs }}</td>
+                                                <td>{{ player.kast }}</td>
+                                            </tr>
+                                            {% endfor %}
+
+                                            <!-- Команда 2 -->
+                                            <tr class="team-header-row">
+                                                <td colspan="8">
+                                                    <i class="fas fa-users"></i> {{ match.team2 }}
+                                                </td>
+                                            </tr>
+                                            {% for player in aggregated_stats if player.team == match.team2 %}
+                                            <tr class="player-stat-row">
+                                                <td class="player-name-cell">
+                                                    <strong>{{ player.name }}</strong>
+                                                </td>
+                                                <td class="rating-cell {{ 'high-rating' if player.rating >= 1.2 else 'low-rating' if player.rating < 0.9 else '' }}">
+                                                    {{ "%.2f"|format(player.rating) }}
+                                                </td>
+                                                <td>{{ player.kills }}</td>
+                                                <td>{{ player.deaths }}</td>
+                                                <td>{{ player.assists }}</td>
+                                                <td>{{ "%.1f"|format(player.adr) }}</td>
+                                                <td>{{ player.hs }}</td>
+                                                <td>{{ player.kast }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MVP матча -->
+        <div class="mvp-section">
+            <h3 class="section-title">MVP матча</h3>
+            <div class="mvp-card">
+                <div class="mvp-player">
+                    <div class="mvp-avatar">
+                        
+                        {% if match.mvpavatar %}
+                        <img src="/static/images/players/{{ match.mvpavatar }}" alt="{{ match.mvp }}"onerror="handleImageError(this)">
+                        {% else %}
+                        <i class="fas fa-user"></i>
+                        {% endif %}
+                    
+                    </div>
+                    <div class="mvp-info">
+                        <h4>{{ match.mvp }}</h4>
+                        <div class="mvp-stats">
+                            <div class="stat">
+                                <span class="stat-label">Средний рейтинг</span>
+                                <span class="stat-value">{{ match.ratingmvp }}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Убийств за карту</span>
+                                <span class="stat-value">{{ match.killsmvp }}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Средний ADR</span>
+                                <span class="stat-value">{{ match.adrmvp }}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Лучшая карта</span>
+                                <span class="stat-value">{{ match.mapmvp }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mvp-reason">
+                    <p>{{ match.reasonmvp }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VOD если есть -->
+        {% if match.vod_url %}
+        <div class="vod-section">
+            <h3 class="section-title">Запись матча</h3>
+            <div class="vod-container">
+                <a href="{{ match.vod_url }}" target="_blank" class="btn-vod">
+                    <i class="fas fa-play-circle"></i>
+                    <span>Смотреть запись матча</span>
+                </a>
+                <p class="vod-note">Нажмите для просмотра полной записи матча на YouTube</p>
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+    <div class="match-upcoming">
+        <div class="upcoming-message">
+            <i class="fas fa-clock"></i>
+            <h3>Матч еще не состоялся</h3>
+            <p>Детальная статистика будет доступна после завершения матча.</p>
+            {% if match.scope_url %}
+            <p>Следите за матчем на <a href="{{ match.scope_url }}" target="_blank">scope.gg</a></p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Кнопка назад -->
+    <div class="back-to-schedule">
+        <a href="{{ url_for('schedule') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i>
+            <span>Вернуться к расписанию</span>
+        </a>
+    </div>
+</div>
+
+{% endblock %}

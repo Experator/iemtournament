@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tournament.name }} - Главный турнир 2029</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <i class="fas fa-gamepad"></i>
+                    <span>CYBERZALUPA</span>
+                </div>
+                <nav class="main-nav">
+                    <a href="{{ url_for('index') }}" class="{% if request.path == '/' %}active{% endif %}">
+                        <i class="fas fa-home"></i> Главная
+                    </a>
+                    <a href="{{ url_for('bracket') }}" class="{% if request.path == '/bracket' %}active{% endif %}">
+                        <i class="fas fa-project-diagram"></i> Сетка
+                    </a>
+                    <a href="{{ url_for('schedule') }}" class="{% if request.path == '/schedule' %}active{% endif %}">
+                        <i class="fas fa-calendar-alt"></i> Расписание
+                    </a>
+                    <a href="{{ url_for('teams') }}" class="{% if request.path == '/teams' %}active{% endif %}">
+                        <i class="fas fa-users"></i> Команды
+                    </a>
+                </nav>
+            <!--<div class="auth-buttons">
+                    <button class="btn-login"><i class="fas fa-user"></i> Войти</button>
+                </div> -->
+            </div>
+        </div>
+        <div class="tournament-header">
+            <div class="container">
+                <h1>{{ tournament.name }}</h1>
+                <div class="tournament-info">
+                    <div class="info-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ tournament.date }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-trophy"></i>
+                        <span>{{ tournament.prize }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>{{ tournament.location }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-gamepad"></i>
+                        <span>{{ tournament.game }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>IEM SAMARA 2026</h3>
+                    <p>Лучший турнир в 2029м году.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Турниры</h3>
+                    <ul>
+                        <li><a href="#">RZD BLAST Bounty 2026 s1</a></li>
+                        <li><a href="#">BLAST Bounty Spring 2025</a></li>
+                        <li><a href="#">StarLadder Budapest Major 2025</a></li>
+                    </ul>
+                </div>
+               
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 WWCrafters. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="team-detail-page">
+    <div class="team-header-detail">
+        <div class="team-logo-detail">
+        <img src="/static/images/logos/{{ team.logo or 'default.png' }}" 
+             alt="{{ team.name }}" 
+             class="team-logo-large-img"
+             onerror="handleTeamLogoError(this)">
+    </div>
+        <div class="team-info-detail">
+            <h1>{{ team.name }}</h1>
+            <div class="team-meta">
+                <span class="country-flag">
+                    <i class="fas fa-map-marker-alt"></i> {{ team.country }}
+                </span>
+                <span class="world-ranking">
+                    <i class="fas fa-trophy"></i> #{{ team.world_ranking }} в мире
+                </span>
+                <span class="established">
+                    <i class="fas fa-calendar-alt"></i> {{ team.created }}
+                </span>
+            </div>
+            <div class="team-coach">
+                <span class="coach-label">Тренер:</span>
+                <span class="coach-name">{{ team.coach.name }}</span>
+                <span class="coach-country">({{ team.coach.country }})</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="team-content">
+        <div class="team-players-section">
+            <h2 class="section-title">Состав команды</h2>
+            <div class="players-grid">
+                {% for player in team.players %}
+                <div class="player-card">
+                    <div class="player-avatar">
+                        {% if player.avatar %}
+                        <img src="/static/images/players/{{ player.avatar }}" alt="{{ player.name }}"onerror="handleImageError(this)">
+                        {% else %}
+                        <i class="fas fa-user"></i>
+                        {% endif %}
+                    </div>
+                    <div class="player-info">
+                        <h3 class="player-name">{{ player.name }}</h3>
+                        <div class="player-details">
+                            <span class="player-role">{{ player.role }}</span>
+                            <span class="player-country">
+                                <i class="fas fa-flag"></i> {{ player.country }}
+                            </span>
+                        </div>
+                        <div class="player-stats">
+                            <div class="stat">
+                                <span class="stat-label">Рейтинг</span>
+                                <span class="stat-value">{{ player.rating }}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">K/D</span>
+                                <span class="stat-value">{{ player.kd }}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Убийств</span>
+                                <span class="stat-value">{{ player.kills }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Coach Card -->
+                <div class="player-card coach-card">
+                    <div class="player-avatar coach-avatar">
+                        {% if team.coach.avatar %}
+                        <img src="/static/images/players/{{ team.coach.avatar }}" alt="{{ team.coach.name }}"onerror="handleImageError(this)">
+                        {% else %}
+                        <i class="fas fa-user"></i>
+                        {% endif %}
+                    </div>
+                    <div class="player-info">
+                        <h3 class="player-name">{{ team.coach.name }}</h3>
+                        <div class="player-details">
+                            <span class="player-role">Тренер</span>
+                            <span class="player-country">
+                                <i class="fas fa-flag"></i> {{ team.coach.country }}
+                            </span>
+                        </div>
+                        <div class="coach-bio">
+                            <p>{{ team.coach.bio }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="team-stats-section">
+            <h2 class="section-title">Статистика команды</h2>
+            <div class="stats-container">
+                <div class="stat-row">
+                    <span class="stat-name">Победы/Поражения</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill wins" style="width: 65%"></div>
+                        <div class="stat-fill losses" style="width: 35%"></div>
+                    </div>
+                    <span class="stat-value">{{ team.winrate }}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-name">Любимая карта</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill map" style="width: 80%"></div>
+                    </div>
+                    <span class="stat-value">{{ team.bmap }}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-name">Победы на пистолетках</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill pistol" style="width: 55%"></div>
+                    </div>
+                    <span class="stat-value">{{ team.winpistol }}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-name">Средний рейтинг HLTV</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill hltv" style="width: 72%"></div>
+                    </div>
+                    <span class="stat-value">{{ team.srating }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="recent-matches">
+            <h2 class="section-title">Последние матчи</h2>
+            <div class="matches-list">
+                <div class="match-result win">
+                    <div class="match-teams">
+                        <span class="team">{{ team.name }}</span>
+                        <span class="score">Unknown</span>
+                        <span class="vs">-</span>
+                        <span class="score">Unknown</span>
+                        <span class="team">Unknown</span>
+                    </div>
+                    <div class="match-date">Unknown</div>
+                </div>
+                <div class="match-result loss">
+                    <div class="match-teams">
+                        <span class="team">{{ team.name }}</span>
+                        <span class="score">Unknown</span>
+                        <span class="vs">-</span>
+                        <span class="score">Unknown</span>
+                        <span class="team">Unknown</span>
+                    </div>
+                    <div class="match-date">Unknown</div>
+                </div>
+                <div class="match-result win">
+                    <div class="match-teams">
+                        <span class="team">{{ team.name }}</span>
+                        <span class="score">Unknown</span>
+                        <span class="vs">-</span>
+                        <span class="score">Unknown</span>
+                        <span class="team">Unknown</span>
+                    </div>
+                    <div class="match-date">Unknown</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

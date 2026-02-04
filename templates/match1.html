@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="match-detail-page">
+    <div class="match-header">
+        <div class="match-teams-header">
+            <div class="team-header">
+                {% set team1_name = match.team1 %}
+                {% set team1_logo = 'wwcr.jpg' if team1_name == 'WWCrafters' else 'swag.jpg' if team1_name == 'Swag'
+                else 'default.png' %}
+                <img src="/static/images/logos/{{ team1_logo }}" alt="{{ team1_name }}" class="team-logo-match">
+                <h2>{{ team1_name }}</h2>
+            </div>
+            <div class="match-score">
+                <div class="score-large">
+                    {% if match.status == 'completed' %}
+                    <span class="score-number">{{ match.team1_score or '0' }}</span>
+                    <span class="score-divider">:</span>
+                    <span class="score-number">{{ match.team2_score or '0' }}</span>
+                    {% else %}
+                    <span class="score-vs">VS</span>
+                    {% endif %}
+                </div>
+                <div class="match-status-large {{ match.status }}">
+                    {% if match.status == 'completed' %}
+                    Завершен
+                    {% elif match.status == 'live' %}
+                    LIVE
+                    {% else %}
+                    Ожидается
+                    {% endif %}
+                </div>
+            </div>
+            <div class="team-header">
+                {% set team2_name = match.team2 %}
+                {% set team2_logo = 'wwcr.jpg' if team2_name == 'WWCrafters' else 'swag.jpg' if team2_name == 'Swag'
+                else 'solyanka.jpg' if team2_name == 'Solyanka' else 'max.jpg' if team2_name == 'Team MAX' else
+                'default.png' %}
+                <img src="/static/images/logos/{{ team2_logo }}" alt="{{ team2_name }}" class="team-logo-match">
+                <h2>{{ team2_name }}</h2>
+            </div>
+        </div>
+
+        <div class="match-meta">
+            <div class="match-info">
+                <div class="info-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>{{ match.date }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-trophy"></i>
+                    <span>{{ match.event }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-flag"></i>
+                    <span>{{ match.format }}</span>
+                </div>
+                {% if match.scope_url %}
+                <div class="info-item">
+                    <i class="fas fa-external-link-alt"></i>
+                    <a href="{{ match.scope_url }}" target="_blank" class="scope-link">
+                        Статистика на scope.gg
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if match.status == 'completed' and 'maps' in match %}
+    <div class="match-content">
+        <!-- Вкладки карт и статистики -->
+        <div class="maps-section">
+            <div class="maps-tabs">
+                <div class="tabs-header">
+                    {% for map in match.maps %}
+                    <button class="tab-link {% if loop.first %}active{% endif %}" 
+                            data-tab="map-{{ loop.index }}">
+                        <i class="fas fa-map"></i> {{ map.name }}
+                    </button>
+                    {% endfor %}
+                    {% if match.overall_stats %}
+                    <button class="tab-link" data-tab="overall-stats">
+                        <i class="fas fa-chart-bar"></i> Общая статистика
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <div class="tabs-content">
+                    <!-- Контент для каждой карты -->
+                    {% for map in match.maps %}
+                    <div class="tab-pane {% if loop.first %}active{% endif %}" id="map-{{ loop.index }}">
+                        <div class="map-card">
+                            <div class="map-header">
+                                <div class="map-name">
+                                    <i class="fas fa-map"></i>
+                                    <span>{{ map.name }}</span>
+                                </div>
+                                <div class="map-score">
+                                    <!-- Победитель карты -->
+                                    <span class="score-team win-status">
+                                        {{ match.team1 if map.winner == match.team1 else match.team2 }}
+                                        <span class="status-label win">(Win)</span>
+                                    </span>
+
+                                    <span class="score-numbers">{{ map.score }}</span>
+
+                                    <!-- Проигравший карты -->
+                                    <span class="score-team lose-status">
+                                        {{ match.team2 if map.winner == match.team1 else match.team1 }}
+                                        <span class="status-label lose">(Lose)</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="map-details">
+                                <div class="map-winner">
+                                    <i class="fas fa-crown"></i>
+                                    <span>Победитель: <strong>{{ map.winner }}</strong></span>
+                                </div>
+                                <div class="map-duration">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Продолжительность: {{ map.duration }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Статистика игроков на карте -->
+                            <div class="map-players-stats">
+                                <h4>Статистика игроков на {{ map.name }}</h4>
+                                <div class="players-stats-table">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Игрок</th>
+                                                <th>Рейтинг</th>
+                                                <th>Убийства</th>
+                                                <th>Смерти</th>
+                                                <th>Ассисты</th>
+                                                <th>ADR</th>
+                                                <th>HS%</th>
+                                                <th>KAST</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Команда 1 -->
+                                            <tr class="team-header-row {{ 'winner-team' if map.winner == match.team1 else 'loser-team' }}">
+                                                <td colspan="8">
+                                                    <i class="fas fa-users"></i> {{ match.team1 }}
+                                                    <span class="team-status {{ 'win' if map.winner == match.team1 else 'lose' }}">
+                                                        ({{ 'Win' if map.winner == match.team1 else 'Lose' }})
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% for player in map.players_stats if player.team == match.team1 %}
+                                            <tr class="player-stat-row">
+                                                <td class="player-name-cell">
+                                                    <strong>{{ player.name }}</strong>
+                                                </td>
+                                                <td class="rating-cell {{ 'high-rating' if player.rating >= 1.2 else 'low-rating' if player.rating < 0.9 else '' }}">
+                                                    {{ "%.2f"|format(player.rating) }}
+                                                </td>
+                                                <td>{{ player.kills }}</td>
+                                                <td>{{ player.deaths }}</td>
+                                                <td>{{ player.assists }}</td>
+                                                <td>{{ "%.1f"|format(player.adr) }}</td>
+                                                <td>{{ player.hs }}</td>
+                                                <td>{{ player.kast }}</td>
+                                            </tr>
+                                            {% endfor %}
+
+                                            <!-- Команда 2 -->
+                                            <tr class="team-header-row {{ 'winner-team' if map.winner == match.team2 else 'loser-team' }}">
+                                                <td colspan="8">
+                                                    <i class="fas fa-users"></i> {{ match.team2 }}
+                                                    <span class="team-status {{ 'win' if map.winner == match.team2 else 'lose' }}">
+                                                        ({{ 'Win' if map.winner == match.team2 else 'Lose' }})
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% for player in map.players_stats if player.team == match.team2 %}
+                                            <tr class="player-stat-row">
+                                                <td class="player-name-cell">
+                                                    <strong>{{ player.name }}</strong>
+                                                </td>
+                                                <td class="rating-cell {{ 'high-rating' if player.rating >= 1.2 else 'low-rating' if player.rating < 0.9 else '' }}">
+                                                    {{ "%.2f"|format(player.rating) }}
+                                                </td>
+                                                <td>{{ player.kills }}</td>
+                                                <td>{{ player.deaths }}</td>
+                                                <td>{{ player.assists }}</td>
+                                                <td>{{ "%.1f"|format(player.adr) }}</td>
+                                                <td>{{ player.hs }}</td>
+                                                <td>{{ player.kast }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Вкладка общей статистики -->
+                    {% if match.overall_stats %}
+                    <div class="tab-pane" id="overall-stats">
+                        <div class="overall-stats-section">
+                            <h3 class="section-title">Общая статистика матча</h3>
+                            <div class="overall-stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ match.overall_stats.total_rounds }}</div>
+                                    <div class="stat-label">Всего раундов</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ "%.2f"|format(match.overall_stats.average_rating.WWCrafters) }}</div>
+                                    <div class="stat-label">Средний рейтинг {{ match.team1 }}</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ "%.2f"|format(match.overall_stats.average_rating.Swag) }}</div>
+                                    <div class="stat-label">Средний рейтинг {{ match.team2 }}</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ match.overall_stats.headshot_percentage.WWCrafters }}</div>
+                                    <div class="stat-label">HS% {{ match.team1 }}</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ match.overall_stats.headshot_percentage.Swag }}</div>
+                                    <div class="stat-label">HS% {{ match.team2 }}</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ match.overall_stats.clutches_won.WWCrafters }}</div>
+                                    <div class="stat-label">Клачи {{ match.team1 }}</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ match.overall_stats.clutches_won.Swag }}</div>
+                                    <div class="stat-label">Клачи {{ match.team2 }}</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ match.overall_stats.pistol_rounds.WWCrafters }}</div>
+                                    <div class="stat-label">Пистолетки {{ match.team1 }}</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ match.overall_stats.pistol_rounds.Swag }}</div>
+                                    <div class="stat-label">Пистолетки {{ match.team2 }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- MVP матча -->
+        <div class="mvp-section">
+            <h3 class="section-title">MVP матча</h3>
+            <div class="mvp-card">
+                <div class="mvp-player">
+                    <div class="mvp-avatar">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="mvp-info">
+                        <h4>Saint (WWCR)</h4>
+                        <div class="mvp-stats">
+                            <div class="stat">
+                                <span class="stat-label">Средний рейтинг</span>
+                                <span class="stat-value">1.47</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Убийств за карту</span>
+                                <span class="stat-value">23.7</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Средний ADR</span>
+                                <span class="stat-value">104.7</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Лучшая карта</span>
+                                <span class="stat-value">Anubis (1.72)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mvp-reason">
+                    <p>Лучший игрок матча по версии HLTV Rating 2.1. Доминирующая сила команды WWCR, показавшая
+                        невероятную эффективность на картах Nuke (1.65) и особенно Anubis (1.72 рейтинг, 28 убийств, 125
+                        ADR). Высокая стабильность и максимальное влияние в ключевых раундах принесли его команде две
+                        победы и общий успех в матче.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VOD если есть -->
+        {% if match.vod_url %}
+        <div class="vod-section">
+            <h3 class="section-title">Запись матча</h3>
+            <div class="vod-container">
+                <a href="{{ match.vod_url }}" target="_blank" class="btn-vod">
+                    <i class="fas fa-play-circle"></i>
+                    <span>Смотреть запись матча</span>
+                </a>
+                <p class="vod-note">Нажмите для просмотра полной записи матча на YouTube</p>
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+    <div class="match-upcoming">
+        <div class="upcoming-message">
+            <i class="fas fa-clock"></i>
+            <h3>Матч еще не состоялся</h3>
+            <p>Детальная статистика будет доступна после завершения матча.</p>
+            {% if match.scope_url %}
+            <p>Следите за матчем на <a href="{{ match.scope_url }}" target="_blank">scope.gg</a></p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Кнопка назад -->
+    <div class="back-to-schedule">
+        <a href="{{ url_for('schedule') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i>
+            <span>Вернуться к расписанию</span>
+        </a>
+    </div>
+</div>
+
+<style>
+/* Стили для вкладок */
+.maps-tabs {
+    background-color: #1a1a2e;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #2d2d4d;
+    margin-bottom: 30px;
+}
+
+.tabs-header {
+    display: flex;
+    background-color: #2d2d4d;
+    border-bottom: 1px solid #2d2d4d;
+    overflow-x: auto;
+}
+
+.tab-link {
+    padding: 15px 25px;
+    background: none;
+    border: none;
+    color: #aaa;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-link:hover {
+    background-color: rgba(0, 168, 255, 0.1);
+    color: #00a8ff;
+}
+
+.tab-link.active {
+    background-color: #1a1a2e;
+    color: #00a8ff;
+    border-bottom: 3px solid #00a8ff;
+}
+
+.tabs-content {
+    padding: 20px;
+}
+
+.tab-pane {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Улучшенные стили для карточек статистики */
+.overall-stats-section .stat-card {
+    background-color: #0f0f1a;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #2d2d4d;
+    transition: all 0.3s ease;
+}
+
+.overall-stats-section .stat-card:hover {
+    transform: translateY(-5px);
+    border-color: #00a8ff;
+    box-shadow: 0 5px 15px rgba(0, 168, 255, 0.2);
+}
+
+.overall-stats-section .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #00a8ff;
+    margin-bottom: 5px;
+}
+
+.overall-stats-section .stat-label {
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.4;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Функция переключения вкладок
+    function switchTab(event) {
+        event.preventDefault();
+        
+        // Удаляем активный класс со всех вкладок
+        document.querySelectorAll('.tab-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // Добавляем активный класс текущей вкладке
+        event.currentTarget.classList.add('active');
+        
+        // Скрываем все панели
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+        
+        // Показываем выбранную панель
+        const tabId = event.currentTarget.getAttribute('data-tab');
+        document.getElementById(tabId).classList.add('active');
+    }
+    
+    // Назначаем обработчики на все вкладки
+    document.querySelectorAll('.tab-link').forEach(link => {
+        link.addEventListener('click', switchTab);
+    });
+});
+</script>
+{% endblock %}

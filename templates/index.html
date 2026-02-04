@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="homepage">
+    <div class="hero-section">
+        <div class="hero-content">
+            <h2>Крупнейший турнир по CS2 в России</h2>
+            <p>Четыре сильнейшие команды сразятся за призовой фонд "{{ tournament.prize }}" и звание чемпиона IEM SAMARA 2026</p>
+            <div class="hero-buttons">
+                <a href="{{ url_for('bracket') }}" class="btn-primary">Турнирная сетка</a>
+                <a href="{{ url_for('schedule') }}" class="btn-secondary">Расписание матчей</a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="trophy">
+                <i class="fas fa-trophy"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="teams-preview">
+        <h2 class="section-title">Участники турнира</h2>
+        <div class="teams-grid">
+            {% for team_id, team in teams.items() %}
+            <a href="{{ url_for('team', team_id=team_id) }}" class="team-card">
+                <div class="team-logo">
+                    <div class="logo-placeholder">
+                        <img src="/static/images/logos/{{ team.logo or 'default.png' }}" 
+             alt="{{ team.name }}" 
+             class="team-logo-large-img1"
+             onerror="handleTeamLogoError(this)">
+                    </div>
+                </div>
+                <h3>{{ team.name }}</h3>
+                <div class="team-info">
+                    <span class="country">{{ team.country }}</span>
+                    <span class="ranking">#{{ team.world_ranking }} в мире</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="tournament-structure">
+        <h2 class="section-title">Формат турнира</h2>
+        <div class="structure-grid">
+            <div class="structure-card">
+                <div class="structure-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>4 команды</h3>
+                <p>Лучшие коллективы из СНГ и Европы</p>
+            </div>
+            <div class="structure-card">
+                <div class="structure-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h3>Двойная элиминация</h3>
+                <p>Система с верхней и нижней сеткой</p>
+            </div>
+            <div class="structure-card">
+                <div class="structure-icon">
+                    <i class="fas fa-map"></i>
+                </div>
+                <h3>Лучшие карты</h3>
+                <p>Anubis, Ancient, Nuke, Overpass, Dust2</p>
+            </div>
+            <div class="structure-card">
+                <div class="structure-icon">
+                    <i class="fas fa-broadcast-tower"></i>
+                </div>
+                <h3>Прямая трансляция</h3>
+                <p>На русском языке</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
